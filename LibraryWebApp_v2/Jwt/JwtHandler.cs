@@ -14,7 +14,7 @@ public class JwtHandler
     public JwtHandler(IConfiguration configuration)
     {
         _configuration = configuration;
-        _jwtSettings = _configuration.GetRequiredSection("JwtSettings");
+        _jwtSettings = _configuration.GetRequiredSection("JWTSettings");
     }
     public string CreateToken(User user, IList<string> roles)
     {

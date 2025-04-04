@@ -1,4 +1,4 @@
-﻿namespace DAL.Models;
+﻿namespace BLL.DTOs.Responses;
 
 public class ApiResponse
 {

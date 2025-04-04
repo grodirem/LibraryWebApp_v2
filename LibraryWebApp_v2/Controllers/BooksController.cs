@@ -1,4 +1,5 @@
 ﻿using BLL.DTOs.Requests;
+using BLL.DTOs.Responses;
 using BLL.Services;
 using DAL.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +9,6 @@ using System.Security.Claims;
 
 namespace LibraryWebApp_v2.Controllers;
 
-[AllowAnonymous]
 [Route("api/books")]
 [ApiController]
 public class BooksController : ControllerBase
@@ -20,126 +20,95 @@ public class BooksController : ControllerBase
         _bookService = bookService;
     }
 
-    // не работает
+    [Authorize(Policy = "AuthenticatedUsers")]
+    [HttpGet("paginated")]
+    public async Task<ActionResult<ApiResponse>> GetAllBooksPaginated(int pageIndex = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+    {
+        var books = await _bookService.GetAllBooksPaginatedAsync(pageIndex, pageSize, cancellationToken);
+        return Ok(new ApiResponse(true, null, books));
+    }
+
     [Authorize(Policy = "AuthenticatedUsers")]
     [HttpGet("all")]
-    public async Task<IActionResult> GetAllBooks([FromQuery] string search, [FromQuery] string genre, [FromQuery] string author)
+    public async Task<IActionResult> GetAllBooks([FromQuery] string? title, [FromQuery] string? genre, [FromQuery] string? authorName, CancellationToken cancellationToken = default)
     {
-        var books = await _bookService.GetAllBooksAsync(search, genre, author);
+        var books = await _bookService.GetAllBooksFilteredAsync(title, genre, authorName, cancellationToken);
         return Ok(books);
     }
 
     [Authorize(Policy = "AuthenticatedUsers")]
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetBookById(int id)
+    public async Task<IActionResult> GetBookById(int id, CancellationToken cancellationToken = default)
     {
-        var book = await _bookService.GetBookByIdAsync(id);
-
-        if (book == null)
-        {
-            return NotFound();
-        }
-
+        var book = await _bookService.GetBookByIdAsync(id, cancellationToken);
         return Ok(book);
     }
 
     [Authorize(Policy = "AuthenticatedUsers")]
     [HttpGet("isbn/{isbn}")]
-    public async Task<IActionResult> GetBookByISBN(string isbn)
+    public async Task<IActionResult> GetBookByISBN(string isbn, CancellationToken cancellationToken = default)
     {
-        var book = await _bookService.GetBookByISBNAsync(isbn);
-
-        if (book == null)
-        {
-            return NotFound();
-        }
-
+        var book = await _bookService.GetBookByISBNAsync(isbn, cancellationToken);
         return Ok(book);
     }
 
     [Authorize(Policy = "OnlyAdminUsers")]
     [HttpPost]
 
-    public async Task<IActionResult> CreateBook([FromForm] CreateBookDto createBookDto)
+    public async Task<IActionResult> CreateBook([FromForm] CreateBookDto createBookDto, CancellationToken cancellationToken = default)
     {
-        var book = await _bookService.CreateBookAsync(createBookDto);
+        var book = await _bookService.CreateBookAsync(createBookDto, cancellationToken);
         return CreatedAtAction(nameof(GetBookById), new { id = book.Id }, book);
     }
 
     [Authorize(Policy = "OnlyAdminUsers")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateBook([FromForm] UpdateBookDto updateBookDto)
+    public async Task<IActionResult> UpdateBook([FromForm] UpdateBookDto updateBookDto, CancellationToken cancellationToken = default)
     {
-        await _bookService.UpdateBookAsync(updateBookDto);
+        await _bookService.UpdateBookAsync(updateBookDto, cancellationToken);
         return NoContent();
     }
 
     [Authorize(Policy = "OnlyAdminUsers")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteBook(int id)
+    public async Task<IActionResult> DeleteBook(int id, CancellationToken cancellationToken = default)
     {
-        await _bookService.DeleteBookAsync(id);
+        await _bookService.DeleteBookAsync(id, cancellationToken);
         return NoContent();
     }
 
     [Authorize(Policy = "AuthenticatedUsers")]
     [HttpPost("borrow")]
-    public async Task<IActionResult> BorrowBook([FromForm] BorrowBookRequest request)
+    public async Task<IActionResult> BorrowBook([FromBody] BorrowBookRequest request, CancellationToken cancellationToken = default)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized("Пользователь не авторизован.");
-        }
-
-        await _bookService.BorrowBookAsync(userId, request);
+        await _bookService.BorrowBookAsync(userId, request, cancellationToken);
         return Ok();
     }
 
     [Authorize(Policy = "AuthenticatedUsers")]
     [HttpPost("return/{id}")]
-    public async Task<IActionResult> ReturnBook(int id)
+    public async Task<IActionResult> ReturnBook(int id, CancellationToken cancellationToken = default)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized("Пользователь не авторизован.");
-        }
-
-        await _bookService.ReturnBookAsync(userId, id);
+        await _bookService.ReturnBookAsync(userId, id, cancellationToken);
         return Ok();
     }
 
     [Authorize(Policy = "AuthenticatedUsers")]
     [HttpGet("user/rentals")]
-    public async Task<IActionResult> GetUserRentals()
+    public async Task<IActionResult> GetUserRentals(CancellationToken cancellationToken = default)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized("Пользователь не авторизован.");
-        }
-
-        var rentals = await _bookService.GetUserRentalsAsync(userId);
+        var rentals = await _bookService.GetUserRentalsAsync(userId, cancellationToken);
         return Ok(rentals);
     }
 
     [Authorize(Policy = "OnlyAdminUsers")]
     [HttpPost("{id}/upload-image")]
-    public async Task<IActionResult> UploadImage(int id, IFormFile file)
+    public async Task<IActionResult> UploadImage(int id, IFormFile file, CancellationToken cancellationToken = default)
     {
-        var imagePath = await _bookService.UploadImageAsync(id, file);
+        var imagePath = await _bookService.UploadImageAsync(id, file, cancellationToken);
         return Ok(new { ImagePath = imagePath});
-    }
-
-    [Authorize(Policy = "AuthenticatedUsers")]
-    [HttpGet("paginated")]
-    public async Task<ActionResult<ApiResponse>> GetAllBooksPaginated(int pageIndex = 1, int pageSize = 10)
-    {
-        var books = await _bookService.GetAllBooksPaginatedAsync(pageIndex, pageSize);
-        return new ApiResponse(true, null, books);
     }
 }

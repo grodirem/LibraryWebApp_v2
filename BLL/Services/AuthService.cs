@@ -2,6 +2,7 @@
 using BLL.DTOs.Requests;
 using BLL.DTOs.Responses;
 using DAL.Models;
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,26 +19,41 @@ public class AuthService
     private readonly UserManager<User> _userManager;
     private readonly IConfiguration _configuration;
     private readonly IMapper _mapper;
+    private readonly TokenService _tokenService;
 
-    public AuthService(UserManager<User> userManager, IConfiguration configuration, IMapper mapper)
+    public AuthService(UserManager<User> userManager, IConfiguration configuration, IMapper mapper, TokenService tokenService)
     {
         _userManager = userManager;
         _configuration = configuration;
         _mapper = mapper;
+        _tokenService = tokenService;
     }
 
-    public async Task<AuthResponseDto> AuthAsync(LoginDto loginDto)
+    public async Task<AuthResponseDto> AuthAsync(LoginDto loginDto, CancellationToken cancellationToken = default)
     {
         var user = await _userManager.FindByEmailAsync(loginDto.Email);
 
-        if (user == null || !await _userManager.CheckPasswordAsync(user, loginDto.Password)) 
+        if (user == null)
         {
-            return new AuthResponseDto();
+            return new AuthResponseDto
+            {
+                IsAuthenticated = false,
+                ErrorMessage = "Пользователь не найден."
+            };
+        }
+
+        if (!await _userManager.CheckPasswordAsync(user, loginDto.Password))
+        {
+            return new AuthResponseDto
+            {
+                IsAuthenticated = false,
+                ErrorMessage = "Неверный пароль."
+            };
         }
 
         var roles = await _userManager.GetRolesAsync(user);
-        var token = GenerateJwtToken(user, roles);
-        var refreshToken = GenerateRefreshToken();
+        var token = _tokenService.GenerateJwtToken(user, roles);
+        var refreshToken = _tokenService.GenerateRefreshToken();
 
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
@@ -50,11 +66,21 @@ public class AuthService
         return response;
     }
 
-    public async Task<RegistrationResponseDto> RegisterAsync(RegisterDto registerDto)
+    public async Task<RegistrationResponseDto> RegisterAsync(RegisterDto registerDto, CancellationToken cancellationToken = default)
     {
         if (registerDto == null)
         {
-            throw new ArgumentNullException(nameof(registerDto), "Необходимо ввести данные пользователя.");
+            throw new ValidationException("Необходимо ввести данные пользователя.");
+        }
+
+        var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
+
+        if (existingUser != null)
+        {
+            return new RegistrationResponseDto
+            {
+                Errors = new List<string> { "Пользователь с таким email уже существует." }
+            };
         }
 
         var user = _mapper.Map<User>(registerDto);
@@ -70,32 +96,30 @@ public class AuthService
         return new RegistrationResponseDto { IsRegistered = true };
     }
 
-    public async Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenRequest request)
+    public async Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken);
+        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken, cancellationToken);
 
         if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
-            return new AuthResponseDto { ErrorMessage = "Токен обновления недействителен." };
+            return new AuthResponseDto
+            {
+                ErrorMessage = "Токен обновления недействителен."
+            };
         }
 
         var roles = await _userManager.GetRolesAsync(user);
-        var newAccessToken = GenerateJwtToken(user, roles);
-        var newRefreshToken = GenerateRefreshToken();
-
-        user.RefreshToken = newRefreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-        await _userManager.UpdateAsync(user);
+        var newAccessToken = _tokenService.GenerateJwtToken(user, roles);
 
         return new AuthResponseDto
         {
             IsAuthenticated = true,
             Token = newAccessToken,
-            RefreshToken = newRefreshToken
+            RefreshToken = request.RefreshToken
         };
     }
 
-    public async Task LogoutAsync(ClaimsPrincipal principal)
+    public async Task LogoutAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
         var user = await _userManager.GetUserAsync(principal);
 
@@ -108,44 +132,5 @@ public class AuthService
         user.RefreshTokenExpiryTime = null;
 
         await _userManager.UpdateAsync(user);
-    }
-
-    private string GenerateJwtToken(User user, IList<string> roles)
-    {
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, user.Email),
-            new Claim(ClaimTypes.NameIdentifier, user.Id)
-        };
-
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
-
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:securityKey"]));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["JwtSettings:expiryInMinutes"]));
-
-        var token = new JwtSecurityToken(
-            issuer: _configuration["JwtSettings:validIssuer"],
-            audience: _configuration["JwtSettings:validAudience"],
-            claims: claims,
-            expires: expires,
-            signingCredentials: creds
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    private string GenerateRefreshToken()
-    {
-        var rand = new byte[32];
-
-        using (var randGenerator = RandomNumberGenerator.Create())
-        {
-            randGenerator.GetBytes(rand);
-            return Convert.ToBase64String(rand);
-        }
     }
 }

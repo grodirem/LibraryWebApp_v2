@@ -4,5 +4,5 @@ namespace DAL.Interfaces;
 
 public interface IAuthorRepository : IRepository<Author>
 {
-    Task<Author> GetByNameAsync(string name);
+    Task<Author> GetByNameAsync(string name, CancellationToken cancellationToken = default);
 }

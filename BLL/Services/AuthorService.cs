@@ -27,41 +27,29 @@ public class AuthorService
         _updateAuthorDtoValidator = updateAuthorDtoValidator;
     }
 
-    public async Task<IEnumerable<AuthorDto>> GetAllAuthorsAsync()
+    public async Task<IEnumerable<AuthorDto>> GetAllAuthorsAsync(CancellationToken cancellationToken = default)
     {
-        var authors = await _authorRepository.GetAllAsync();
+        var authors = await _authorRepository.GetAllAsync(cancellationToken);
         var authorDtos = _mapper.Map<IEnumerable<AuthorDto>>(authors);
-
-        foreach (var authorDto in authorDtos)
-        {
-            var validationResult = await _authorDtoValidator.ValidateAsync(authorDto);
-
-            if (!validationResult.IsValid)
-            {
-                throw new ValidationException(validationResult.Errors);
-            }
-        }
-
         return authorDtos;
     }
 
-    public async Task<AuthorDto> GetAuthorByIdAsync(int id)
+    public async Task<AuthorDto> GetAuthorByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var author = await _authorRepository.GetByIdAsync(id);
-        var authorDto = _mapper.Map<AuthorDto>(author);
-        var validationResult = await _authorDtoValidator.ValidateAsync(authorDto);
+        var author = await _authorRepository.GetByIdAsync(id, cancellationToken);
 
-        if (!validationResult.IsValid)
+        if (author == null)
         {
-            throw new ValidationException(validationResult.Errors);
+            throw new Exception("Автор не найден.");
         }
 
+        var authorDto = _mapper.Map<AuthorDto>(author);
         return authorDto;
     }
 
-    public async Task<AuthorDto> CreateAuthorAsync(CreateAuthorDto createAuthorDto)
+    public async Task<AuthorDto> CreateAuthorAsync(CreateAuthorDto createAuthorDto, CancellationToken cancellationToken = default)
     {
-        var validationResult = await _createAuthorDtoValidator.ValidateAsync(createAuthorDto);
+        var validationResult = await _createAuthorDtoValidator.ValidateAsync(createAuthorDto, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -72,7 +60,7 @@ public class AuthorService
 
         try
         {
-            await _authorRepository.AddAsync(author);
+            await _authorRepository.AddAsync(author, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -82,9 +70,9 @@ public class AuthorService
         return _mapper.Map<AuthorDto>(author);
     }
 
-    public async Task UpdateAuthorAsync(UpdateAuthorDto updateAuthorDto)
+    public async Task UpdateAuthorAsync(UpdateAuthorDto updateAuthorDto, CancellationToken cancellationToken = default)
     {
-        var validationResult = await _updateAuthorDtoValidator.ValidateAsync(updateAuthorDto);
+        var validationResult = await _updateAuthorDtoValidator.ValidateAsync(updateAuthorDto, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -95,7 +83,7 @@ public class AuthorService
 
         try
         {
-            await _authorRepository.UpdateAsync(author);
+            await _authorRepository.UpdateAsync(author, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -103,21 +91,21 @@ public class AuthorService
         }
     }
 
-    public async Task DeleteAuthorAsync(int id)
+    public async Task DeleteAuthorAsync(int id, CancellationToken cancellationToken = default)
     {
-        var author = await _authorRepository.GetByIdAsync(id);
+        var author = await _authorRepository.GetByIdAsync(id, cancellationToken);
 
         if (author == null)
         {
             throw new Exception("Автор не найден.");
         }
 
-        await _authorRepository.DeleteAsync(author);
+        await _authorRepository.DeleteAsync(author, cancellationToken);
     }
 
-    public async Task<IEnumerable<Book>> GetBooksByAuthorIdAsync(int id)
+    public async Task<IEnumerable<Book>> GetBooksByAuthorIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var books = await _bookRepository.GetBooksByAuthorIdAsync(id);
+        var books = await _bookRepository.GetBooksByAuthorIdAsync(id, cancellationToken);
         return books;
     }
 }

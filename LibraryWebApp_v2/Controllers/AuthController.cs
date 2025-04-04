@@ -17,49 +17,31 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("authenticate")]
-    public async Task<IActionResult> Authenticate([FromBody] LoginDto loginDto)
+    public async Task<IActionResult> Authenticate([FromBody] LoginDto loginDto, CancellationToken cancellationToken = default)
     {
-        var result = await _authService.AuthAsync(loginDto);
-
-        if (!result.IsAuthenticated)
-        {
-            return Unauthorized(result);
-        }
-
+        var result = await _authService.AuthAsync(loginDto, cancellationToken);
         return Ok(result);
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDto userDto)
+    public async Task<IActionResult> Register([FromBody] RegisterDto userDto, CancellationToken cancellationToken = default)
     {
-        var result = await _authService.RegisterAsync(userDto);
-
-        if (!result.IsRegistered)
-        {
-            return BadRequest(result);
-        }
-
-        return StatusCode(201);
+        var result = await _authService.RegisterAsync(userDto, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await _authService.RefreshTokenAsync(request);
-
-        if (!result.IsAuthenticated)
-        {
-            return Unauthorized(result);
-        }
-
+        var result = await _authService.RefreshTokenAsync(request, cancellationToken);
         return Ok(result);
     }
 
     [Authorize]
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout()
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken = default)
     {
-        await _authService.LogoutAsync(User);
+        await _authService.LogoutAsync(User, cancellationToken);
         return Ok();
     }
 }

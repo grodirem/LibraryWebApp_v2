@@ -14,47 +14,47 @@ public class Repository<T> : IRepository<T> where T : class
         _dbSet = context.Set<T>();
     }
 
-    public async Task<T?> GetByIdAsync(int id)
+    public async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.FindAsync(id);
+        return await _dbSet.FindAsync(id, cancellationToken);
     }
 
-    public async Task<IEnumerable<T>> GetAllAsync()
+    public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _dbSet.ToListAsync();
+        return await _dbSet.ToListAsync(cancellationToken);
     }
-    public async Task AddAsync(T entity)
+    public async Task AddAsync(T entity, CancellationToken cancellationToken = default)
     {
-        await _dbSet.AddAsync(entity);
-        await SaveAsync();
+        await _dbSet.AddAsync(entity, cancellationToken);
+        await SaveAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(T entity)
+    public async Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
         _dbSet.Update(entity);
-        await SaveAsync();
+        await SaveAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(T entity)
+    public async Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
     {
         _dbSet.Remove(entity);
-        await SaveAsync();
+        await SaveAsync(cancellationToken);
     }
 
-    public async Task SaveAsync()
+    public async Task SaveAsync(CancellationToken cancellationToken = default)
     {
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<PaginatedList<T>> GetAllPaginated(int pageIndex, int pageSize)
+    public async Task<PaginatedList<T>> GetAllPaginated(int pageIndex, int pageSize, CancellationToken cancellationToken = default)
     {
         var items = await _dbSet
             .OrderBy(i => EF.Property<object>(i, "Id"))
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
-        var count = await _dbSet.CountAsync();
+        var count = await _dbSet.CountAsync(cancellationToken);
         var totalPages = (int)Math.Ceiling(count / (double)pageSize);
 
         return new PaginatedList<T>(items, pageIndex, totalPages);

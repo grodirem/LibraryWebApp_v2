@@ -26,7 +26,7 @@ public class Middleware
 
     private Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        Console.WriteLine($"An error occurred: {exception.Message}");
+        Console.WriteLine($"Произошла ошибка: {exception.Message}");
 
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
@@ -34,7 +34,7 @@ public class Middleware
         var response = new
         {
             context.Response.StatusCode,
-            Message = "An unexpected error occurred. Please try again later.",
+            Message = "Произошла непредвиденная ошибка. Попробуйте позже.",
             Detailed = exception.Message
         };
 
