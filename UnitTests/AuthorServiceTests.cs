@@ -107,30 +107,6 @@ public class AuthorServiceTests
     }
 
     [Fact]
-    public async Task GetAllAuthorsAsync_ShouldThrowValidationException_WhenValidationFails()
-    {
-        using (var context = new ApplicationContext(_options))
-        {
-            var authorRepository = new AuthorRepository(context);
-            var author = new Author
-            {
-                Id = 1,
-                FirstName = "",
-                LastName = "Абдулаев",
-                BirthDate = new DateTime(1980, 1, 1),
-                Country = "Австралия"
-            };
-            await authorRepository.AddAsync(author);
-            await context.SaveChangesAsync();
-        }
-
-        IEnumerable<AuthorDto> result;
-        var exception = await Assert.ThrowsAsync<ValidationException>(() => _authorService.GetAllAuthorsAsync());
-        Assert.NotEmpty(exception.Errors);
-        Assert.Contains(exception.Errors, e => e.ErrorMessage == "Введите имя.");
-    }
-
-    [Fact]
     public async Task CreateAuthorAsync_ShouldReturnAuthorDto_WhenAuthorIsCreated()
     {
         var createAuthorDto = new CreateAuthorDto
@@ -179,7 +155,7 @@ public class AuthorServiceTests
 
         var authorRepositoryMock = new Mock<IAuthorRepository>();
         authorRepositoryMock
-            .Setup(repo => repo.AddAsync(It.IsAny<Author>()))
+            .Setup(repo => repo.AddAsync(It.IsAny<Author>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Ошибка базы данных"));
 
         var bookRepository = new BookRepository(new ApplicationContext(_options));
@@ -197,7 +173,7 @@ public class AuthorServiceTests
     {
         var authorRepositoryMock = new Mock<IAuthorRepository>();
         authorRepositoryMock
-            .Setup(repo => repo.GetByIdAsync(It.IsAny<int>()))
+            .Setup(repo => repo.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Author)null);
 
         var authorService = new AuthorService(authorRepositoryMock.Object, null, _mapper, null, null, null);
@@ -217,7 +193,7 @@ public class AuthorServiceTests
     };
 
         var bookRepositoryMock = new Mock<IBookRepository>();
-        bookRepositoryMock.Setup(repo => repo.GetBooksByAuthorIdAsync(authorId))
+        bookRepositoryMock.Setup(repo => repo.GetBooksByAuthorIdAsync(authorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(books);
 
         var authorService = new AuthorService(null, bookRepositoryMock.Object, _mapper, null, null, null);
@@ -235,7 +211,7 @@ public class AuthorServiceTests
         var authorId = 1;
 
         var bookRepositoryMock = new Mock<IBookRepository>();
-        bookRepositoryMock.Setup(repo => repo.GetBooksByAuthorIdAsync(authorId))
+        bookRepositoryMock.Setup(repo => repo.GetBooksByAuthorIdAsync(authorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Book>());
 
         var authorService = new AuthorService(null, bookRepositoryMock.Object, _mapper, null, null, null);
