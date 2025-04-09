@@ -1,6 +1,5 @@
-﻿using BLL.DTOs.Models;
-using BLL.DTOs.Requests;
-using BLL.Services;
+﻿using BLL.DTOs.Requests;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,9 +9,9 @@ namespace LibraryWebApp_v2.Controllers;
 [ApiController]
 public class AuthorsController : ControllerBase
 {
-    private readonly AuthorService _authorService;
+    private readonly IAuthorService _authorService;
 
-    public AuthorsController(AuthorService authorService)
+    public AuthorsController(IAuthorService authorService)
     {
         _authorService = authorService;
     }

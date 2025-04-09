@@ -48,13 +48,14 @@ public class Repository<T> : IRepository<T> where T : class
 
     public async Task<PaginatedList<T>> GetAllPaginated(int pageIndex, int pageSize, CancellationToken cancellationToken = default)
     {
+        var count = await _dbSet.CountAsync(cancellationToken);
+        
         var items = await _dbSet
             .OrderBy(i => EF.Property<object>(i, "Id"))
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        var count = await _dbSet.CountAsync(cancellationToken);
         var totalPages = (int)Math.Ceiling(count / (double)pageSize);
 
         return new PaginatedList<T>(items, pageIndex, totalPages);

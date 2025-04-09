@@ -73,27 +73,6 @@ namespace DAL.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Books",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AuthorId = table.Column<int>(type: "int", nullable: false),
-                    ISBN = table.Column<string>(type: "nvarchar(13)", maxLength: 13, nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Genre = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(400)", maxLength: 400, nullable: false),
-                    BorrowedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ReturnBy = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsBorrowed = table.Column<bool>(type: "bit", nullable: false),
-                    ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Books", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -200,6 +179,33 @@ namespace DAL.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Books",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AuthorId = table.Column<int>(type: "int", nullable: false),
+                    ISBN = table.Column<string>(type: "nvarchar(13)", maxLength: 13, nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Genre = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(400)", maxLength: 400, nullable: false),
+                    BorrowedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReturnBy = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsBorrowed = table.Column<bool>(type: "bit", nullable: false),
+                    ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Books", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Books_Authors_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "Authors",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserBooks",
                 columns: table => new
                 {
@@ -237,7 +243,7 @@ namespace DAL.Migrations
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "FirstName", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "5e6f7g8h-e5f6-7890-1234-56789abcdef5", 0, "fe0c8dbf-2132-4527-a84d-4de2c7075da2", "admin@gmail.com", true, "a", "a", false, null, "ADMIN@GMAIL.COM", "A", "AQAAAAIAAYagAAAAEKpdQkQAGo7ncftixBjuQhRu3bPoEhCNnrPifrbV+a3yaCKL1iQu9rk8ftYckN4aog==", null, false, null, null, "fixed-security-stamp", false, "a" });
+                values: new object[] { "5e6f7g8h-e5f6-7890-1234-56789abcdef5", 0, "b51be70f-54b4-4da7-8b70-08beb756c542", "admin@gmail.com", true, "a", "a", false, null, "ADMIN@GMAIL.COM", "A", "AQAAAAIAAYagAAAAEGXG/HKGe6gx/nunenUGPfprvyu6px5fHnsgJtvAyACyJqBoDC6OJMAuV0sIOfBtig==", null, false, null, null, "fixed-security-stamp", false, "a" });
 
             migrationBuilder.InsertData(
                 table: "AspNetUserRoles",
@@ -284,6 +290,11 @@ namespace DAL.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Books_AuthorId",
+                table: "Books",
+                column: "AuthorId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Books_ISBN",
                 table: "Books",
                 column: "ISBN",
@@ -319,9 +330,6 @@ namespace DAL.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Authors");
-
-            migrationBuilder.DropTable(
                 name: "UserBooks");
 
             migrationBuilder.DropTable(
@@ -332,6 +340,9 @@ namespace DAL.Migrations
 
             migrationBuilder.DropTable(
                 name: "Books");
+
+            migrationBuilder.DropTable(
+                name: "Authors");
         }
     }
 }

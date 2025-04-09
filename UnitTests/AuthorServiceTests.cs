@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using BLL.DTOs.Models;
 using BLL.DTOs.Requests;
+using BLL.Interfaces;
 using BLL.Profiles;
 using BLL.Services;
 using BLL.Validators;
@@ -11,16 +12,12 @@ using DAL.Repositories;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Xunit;
 
 public class AuthorServiceTests
 {
     private readonly DbContextOptions<ApplicationContext> _options;
     private readonly IMapper _mapper;
-    private readonly AuthorService _authorService;
+    private readonly IAuthorService _authorService;
 
     public AuthorServiceTests()
     {

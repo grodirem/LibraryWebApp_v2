@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using BLL.Interfaces;
+using Microsoft.AspNetCore.Http;
 
 namespace BLL.Services;
 
-public class ImageService
+public class ImageService : IImageService
 {
     private readonly string _imageDirectory;
 

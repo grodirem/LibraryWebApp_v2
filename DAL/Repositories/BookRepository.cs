@@ -10,7 +10,9 @@ public class BookRepository : Repository<Book>, IBookRepository
 
     public async Task<IEnumerable<Book>> GetAllBooksFilteredAsync(string? title, string? genre, int? authorId, CancellationToken cancellationToken = default)
     {
-        var booksQuery = _context.Books.AsQueryable();
+        var booksQuery = _context.Books
+            .Include(b => b.Author)
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(title))
         {
@@ -34,12 +36,20 @@ public class BookRepository : Repository<Book>, IBookRepository
     {
         return await _context.Books
             .Where(b => b.AuthorId == id)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<Book?> GetByISBNAsync(string isbn, CancellationToken cancellationToken = default)
     {
         return await _context.Books
-            .FirstOrDefaultAsync(b => b.ISBN == isbn);
+            .Include(b => b.Author)
+            .FirstOrDefaultAsync(b => b.ISBN == isbn, cancellationToken);
+    }
+
+    public async Task<Book?> GetByIdWithAuthorAsync(int id, CancellationToken cancellationToken)
+    {
+        return await _context.Books
+            .Include(b => b.Author)
+            .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
     }
 }

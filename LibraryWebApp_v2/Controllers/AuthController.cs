@@ -1,5 +1,5 @@
 ﻿using BLL.DTOs.Requests;
-using BLL.Services;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,9 +9,9 @@ namespace LibraryWebApp_v2.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
-    private readonly AuthService _authService;
+    private readonly IAuthService _authService;
 
-    public AuthController(AuthService authService)
+    public AuthController(IAuthService authService)
     {
         _authService = authService;
     }
@@ -30,6 +30,7 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize(Policy = "AuthenticatedUsers")]
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken = default)
     {
@@ -37,7 +38,7 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize]
+    [Authorize(Policy = "AuthenticatedUsers")]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout(CancellationToken cancellationToken = default)
     {

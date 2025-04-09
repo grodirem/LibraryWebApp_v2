@@ -1,23 +1,24 @@
 ﻿using AutoMapper;
 using BLL.DTOs.Models;
 using BLL.DTOs.Requests;
-using BLL.Validators;
+using BLL.Exceptions;
+using BLL.Interfaces;
 using DAL.Interfaces;
 using DAL.Models;
 using FluentValidation;
 
 namespace BLL.Services;
 
-public class AuthorService
+public class AuthorService : IAuthorService
 {
     private readonly IAuthorRepository _authorRepository;
     private readonly IBookRepository _bookRepository;
     private readonly IMapper _mapper;
-    private readonly AuthorDtoValidator _authorDtoValidator;
-    private readonly CreateAuthorDtoValidator _createAuthorDtoValidator;
-    private readonly UpdateAuthorDtoValidator _updateAuthorDtoValidator;
+    private readonly IValidator<AuthorDto> _authorDtoValidator;
+    private readonly IValidator<CreateAuthorDto> _createAuthorDtoValidator;
+    private readonly IValidator<UpdateAuthorDto> _updateAuthorDtoValidator;
 
-    public AuthorService(IAuthorRepository authorRepository, IBookRepository bookRepository, IMapper mapper, AuthorDtoValidator authorDtoValidator, CreateAuthorDtoValidator createAuthorDtoValidator, UpdateAuthorDtoValidator updateAuthorDtoValidator)
+    public AuthorService(IAuthorRepository authorRepository, IBookRepository bookRepository, IMapper mapper, IValidator<AuthorDto> authorDtoValidator, IValidator<CreateAuthorDto> createAuthorDtoValidator, IValidator<UpdateAuthorDto> updateAuthorDtoValidator)
     {
         _authorRepository = authorRepository;
         _bookRepository = bookRepository;
@@ -40,7 +41,7 @@ public class AuthorService
 
         if (author == null)
         {
-            throw new Exception("Автор не найден.");
+            throw new NotFoundException("Автор не найден.");
         }
 
         var authorDto = _mapper.Map<AuthorDto>(author);
@@ -49,55 +50,56 @@ public class AuthorService
 
     public async Task<AuthorDto> CreateAuthorAsync(CreateAuthorDto createAuthorDto, CancellationToken cancellationToken = default)
     {
-        var validationResult = await _createAuthorDtoValidator.ValidateAsync(createAuthorDto, cancellationToken);
+        await _createAuthorDtoValidator.ValidateAndThrowAsync(createAuthorDto, cancellationToken);
 
-        if (!validationResult.IsValid)
+        var existingAuthor = await _authorRepository.GetByNameAsync(
+            $"{createAuthorDto.FirstName} {createAuthorDto.LastName}",
+            cancellationToken);
+
+        if (existingAuthor != null)
         {
-            throw new ValidationException(validationResult.Errors);
+            throw new InvalidOperationException($"Автор {createAuthorDto.FirstName} {createAuthorDto.LastName} уже существует");
         }
 
         var author = _mapper.Map<Author>(createAuthorDto);
-
-        try
-        {
-            await _authorRepository.AddAsync(author, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Ошибка при создании автора.", ex);
-        }
+        await _authorRepository.AddAsync(author, cancellationToken);
 
         return _mapper.Map<AuthorDto>(author);
     }
 
     public async Task UpdateAuthorAsync(UpdateAuthorDto updateAuthorDto, CancellationToken cancellationToken = default)
     {
-        var validationResult = await _updateAuthorDtoValidator.ValidateAsync(updateAuthorDto, cancellationToken);
+        await _updateAuthorDtoValidator.ValidateAndThrowAsync(updateAuthorDto, cancellationToken);
 
-        if (!validationResult.IsValid)
+        var existingAuthor = await _authorRepository.GetByIdAsync(updateAuthorDto.Id, cancellationToken)
+            ?? throw new NotFoundException($"Автор с ID {updateAuthorDto.Id} не найден");
+
+        var newFullName = $"{updateAuthorDto.FirstName} {updateAuthorDto.LastName}";
+        if ($"{existingAuthor.FirstName} {existingAuthor.LastName}" != newFullName)
         {
-            throw new ValidationException(validationResult.Errors);
+            var authorWithSameName = await _authorRepository.GetByNameAsync(newFullName, cancellationToken);
+            if (authorWithSameName != null)
+            {
+                throw new InvalidOperationException($"Автор {newFullName} уже существует");
+            }
         }
 
-        var author = _mapper.Map<Author>(updateAuthorDto);
-
-        try
-        {
-            await _authorRepository.UpdateAsync(author, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Ошибка при обновлении автора.", ex);
-        }
+        _mapper.Map(updateAuthorDto, existingAuthor);
+        await _authorRepository.UpdateAsync(existingAuthor, cancellationToken);
     }
 
     public async Task DeleteAuthorAsync(int id, CancellationToken cancellationToken = default)
     {
         var author = await _authorRepository.GetByIdAsync(id, cancellationToken);
-
         if (author == null)
         {
-            throw new Exception("Автор не найден.");
+            throw new NotFoundException("Автор не найден.");
+        }
+
+        var books = await _bookRepository.GetBooksByAuthorIdAsync(id, cancellationToken);
+        if (books.Any())
+        {
+            throw new InvalidOperationException("Нельзя удалить автора у которого есть книги.");
         }
 
         await _authorRepository.DeleteAsync(author, cancellationToken);

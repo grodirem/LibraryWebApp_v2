@@ -7,4 +7,6 @@ public class Author
     public string LastName { get; set; } = string.Empty;
     public DateTime BirthDate { get; set; }
     public string Country { get; set; } = string.Empty;
+
+    public ICollection<Book> Books { get; set; } = new List<Book>();
 }

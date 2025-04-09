@@ -1,11 +1,6 @@
 ﻿using DAL.Models;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace DAL.Configurations;
 
@@ -15,18 +10,12 @@ public class UserBooksConfiguration : IEntityTypeConfiguration<UserBooks>
     {
         builder.HasKey(ub => ub.Id);
 
-        builder.Property(ub => ub.UserId)
-            .IsRequired();
-
-        builder.Property(ub => ub.BookId)
-            .IsRequired();
-
-        builder.HasOne<User>()
+        builder.HasOne(ub => ub.User)
             .WithMany()
             .HasForeignKey(ub => ub.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<Book>()
+        builder.HasOne(ub => ub.Book)
             .WithMany()
             .HasForeignKey(ub => ub.BookId)
             .OnDelete(DeleteBehavior.Cascade);

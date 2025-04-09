@@ -1,27 +1,24 @@
 ﻿using AutoMapper;
 using BLL.DTOs.Requests;
 using BLL.DTOs.Responses;
+using BLL.Exceptions;
+using BLL.Interfaces;
 using DAL.Models;
-using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace BLL.Services;
 
-public class AuthService
+public class AuthService : IAuthService
 {
     private readonly UserManager<User> _userManager;
     private readonly IConfiguration _configuration;
     private readonly IMapper _mapper;
-    private readonly TokenService _tokenService;
+    private readonly ITokenService _tokenService;
 
-    public AuthService(UserManager<User> userManager, IConfiguration configuration, IMapper mapper, TokenService tokenService)
+    public AuthService(UserManager<User> userManager, IConfiguration configuration, IMapper mapper, ITokenService tokenService)
     {
         _userManager = userManager;
         _configuration = configuration;

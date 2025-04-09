@@ -12,4 +12,6 @@ public class Book
     public DateTime? ReturnBy { get; set; }
     public bool IsBorrowed { get; set; }
     public string? ImagePath { get; set; }
+
+    public Author Author { get; set; }
 }

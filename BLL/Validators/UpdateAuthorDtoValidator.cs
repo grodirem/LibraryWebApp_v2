@@ -6,37 +6,26 @@ using FluentValidation.Results;
 
 namespace BLL.Validators;
 
-public interface IUpdateAuthorDtoValidator
+public class UpdateAuthorDtoValidator : AbstractValidator<UpdateAuthorDto>
 {
-    Task<ValidationResult> ValidateAsync(UpdateAuthorDto updateAuthorDto, CancellationToken cancellationToken = default);
-}
-
-public class UpdateAuthorDtoValidator : AbstractValidator<UpdateAuthorDto>, IUpdateAuthorDtoValidator
-{
-    private readonly IAuthorRepository _authorRepository;
-
-    public UpdateAuthorDtoValidator(IAuthorRepository authorRepository)
+    public UpdateAuthorDtoValidator()
     {
-        _authorRepository = authorRepository;
+        RuleFor(a => a.Id)
+            .GreaterThan(0).WithMessage("Id должен быть больше 0.");
 
-        RuleFor(author => author.FirstName)
+        RuleFor(a => a.FirstName)
             .NotEmpty().WithMessage("Введите имя.")
-            .Length(1, 30).WithMessage("Имя не должно превышать 30 символов.");
+            .MaximumLength(30).WithMessage("Имя не должно превышать 30 символов.");
 
         RuleFor(author => author.LastName)
             .NotEmpty().WithMessage("Введите фамилию.")
-            .Length(1, 30).WithMessage("Фамилия не должна превышать 30 символов.");
+            .MaximumLength(30).WithMessage("Фамилия не должна превышать 30 символов.");
 
         RuleFor(author => author.BirthDate)
             .NotEmpty().WithMessage("Введите дату рождения.")
-            .LessThan(DateTime.Now).WithMessage("Дата рождения должна быть в прошлом.");
+            .LessThan(DateTime.Today).WithMessage("Дата рождения должна быть в прошлом.");
 
         RuleFor(author => author.Country)
             .NotEmpty().WithMessage("Введите страну.");
-    }
-
-    public Task<ValidationResult> ValidateDtoAsync(UpdateAuthorDto authorDto, CancellationToken cancellationToken = default)
-    {
-        return ValidateAsync(authorDto, cancellationToken);
     }
 }

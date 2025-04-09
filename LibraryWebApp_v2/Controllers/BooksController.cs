@@ -1,9 +1,7 @@
 ﻿using BLL.DTOs.Requests;
 using BLL.DTOs.Responses;
-using BLL.Services;
-using DAL.Models;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -13,9 +11,9 @@ namespace LibraryWebApp_v2.Controllers;
 [ApiController]
 public class BooksController : ControllerBase
 {
-    private readonly BookService _bookService;
+    private readonly IBookService _bookService;
 
-    public BooksController(BookService bookService)
+    public BooksController(IBookService bookService)
     {
         _bookService = bookService;
     }

@@ -1,7 +1,6 @@
 using BLL.Profiles;
 using DAL;
 using DAL.Models;
-using LibraryWebApp_v2.Jwt;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;

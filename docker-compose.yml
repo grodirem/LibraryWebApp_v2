@@ -12,8 +12,8 @@
 
   librarywebapp_v2:
     build:
-      context: .  # Корень проекта
-      dockerfile: LibraryWebApp_v2/Dockerfile  # Путь к Dockerfile
+      context: .
+      dockerfile: LibraryWebApp_v2/Dockerfile
     container_name: librarywebapp_v2
     ports:
       - "8080:8080"

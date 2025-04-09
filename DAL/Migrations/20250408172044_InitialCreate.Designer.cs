@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20250331092133_InitialCreate")]
+    [Migration("20250408172044_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -99,6 +99,8 @@ namespace DAL.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
 
                     b.HasIndex("ISBN")
                         .IsUnique();
@@ -187,7 +189,7 @@ namespace DAL.Migrations
                         {
                             Id = "5e6f7g8h-e5f6-7890-1234-56789abcdef5",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "fe0c8dbf-2132-4527-a84d-4de2c7075da2",
+                            ConcurrencyStamp = "b51be70f-54b4-4da7-8b70-08beb756c542",
                             Email = "admin@gmail.com",
                             EmailConfirmed = true,
                             FirstName = "a",
@@ -195,7 +197,7 @@ namespace DAL.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@GMAIL.COM",
                             NormalizedUserName = "A",
-                            PasswordHash = "AQAAAAIAAYagAAAAEKpdQkQAGo7ncftixBjuQhRu3bPoEhCNnrPifrbV+a3yaCKL1iQu9rk8ftYckN4aog==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGXG/HKGe6gx/nunenUGPfprvyu6px5fHnsgJtvAyACyJqBoDC6OJMAuV0sIOfBtig==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "fixed-security-stamp",
                             TwoFactorEnabled = false,
@@ -381,19 +383,34 @@ namespace DAL.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("DAL.Models.Book", b =>
+                {
+                    b.HasOne("DAL.Models.Author", "Author")
+                        .WithMany("Books")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
             modelBuilder.Entity("DAL.Models.UserBooks", b =>
                 {
-                    b.HasOne("DAL.Models.Book", null)
+                    b.HasOne("DAL.Models.Book", "Book")
                         .WithMany()
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("DAL.Models.User", null)
+                    b.HasOne("DAL.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -445,6 +462,11 @@ namespace DAL.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("DAL.Models.Author", b =>
+                {
+                    b.Navigation("Books");
                 });
 #pragma warning restore 612, 618
         }

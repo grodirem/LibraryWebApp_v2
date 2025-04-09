@@ -4,26 +4,25 @@ using FluentValidation.Results;
 
 namespace BLL.Validators;
 
-public interface IAuthorDtoValidator
-{
-    Task<ValidationResult> ValidateAsync(AuthorDto authorDto, CancellationToken cancellationToken = default);
-}
 
-public class AuthorDtoValidator : AbstractValidator<AuthorDto>, IAuthorDtoValidator
+public class AuthorDtoValidator : AbstractValidator<AuthorDto>
 {
     public AuthorDtoValidator()
     {
-        RuleFor(author => author.FirstName)
+        RuleFor(a => a.Id)
+            .GreaterThan(0).WithMessage("Id должен быть больше 0.");
+
+        RuleFor(a => a.FirstName)
             .NotEmpty().WithMessage("Введите имя.")
-            .Length(1, 30).WithMessage("Имя не должно превышать 30 символов.");
+            .MaximumLength(30).WithMessage("Имя не должно превышать 30 символов.");
 
         RuleFor(author => author.LastName)
             .NotEmpty().WithMessage("Введите фамилию.")
-            .Length(1, 30).WithMessage("Фамилия не должна превышать 30 символов.");
+            .MaximumLength(30).WithMessage("Фамилия не должна превышать 30 символов.");
 
         RuleFor(author => author.BirthDate)
             .NotEmpty().WithMessage("Введите дату рождения.")
-            .LessThan(DateTime.Now).WithMessage("Дата рождения должна быть в прошлом.");
+            .LessThan(DateTime.Today).WithMessage("Дата рождения должна быть в прошлом.");
 
         RuleFor(author => author.Country)
             .NotEmpty().WithMessage("Введите страну.");

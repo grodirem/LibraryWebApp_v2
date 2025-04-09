@@ -1,4 +1,5 @@
-﻿using DAL.Models;
+﻿using BLL.Interfaces;
+using DAL.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -8,7 +9,7 @@ using System.Text;
 
 namespace BLL.Services;
 
-public class TokenService
+public class TokenService : ITokenService
 {
     private readonly IConfiguration _configuration;
 
