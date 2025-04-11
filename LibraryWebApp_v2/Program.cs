@@ -77,7 +77,6 @@ public class Program
             options.AddPolicy("AuthenticatedUsers", policy => policy.RequireAuthenticatedUser());
         });
 
-        builder.Services.AddSingleton<JwtHandler>();
         builder.Services.AddControllers();
 
         builder.Services.AddRepositories();

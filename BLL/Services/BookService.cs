@@ -145,6 +145,12 @@ public class BookService : IBookService
     {
         var book = await _bookRepository.GetByIdAsync(id, cancellationToken);
         if (book == null) throw new NotFoundException("Книга не найдена.");
+
+        if (!string.IsNullOrEmpty(book.ImagePath))
+        {
+            _imageService.DeleteImage(book.ImagePath);
+        }
+
         await _bookRepository.DeleteAsync(book, cancellationToken);
     }
 
@@ -186,8 +192,7 @@ public class BookService : IBookService
     {
         if (string.IsNullOrEmpty(userId)) throw new UnauthorizedAccessException("Введите id пользователя");
 
-        var rental = (await _userBooksRepository.GetAllAsync(cancellationToken))
-            .FirstOrDefault(r => r.UserId == userId && r.BookId == bookId);
+        var rental = await _userBooksRepository.GetUserRentalAsync(userId, bookId, cancellationToken);
 
         if (rental == null) throw new NotFoundException("Запись не найдена.");
 

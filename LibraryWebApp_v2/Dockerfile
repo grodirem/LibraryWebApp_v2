@@ -8,6 +8,7 @@ WORKDIR /src
 
 # Копируем все файлы проекта и собираем приложение
 COPY ["LibraryWebApp_v2/LibraryWebApp_v2.csproj", "LibraryWebApp_v2/"]
+COPY ["UnitTests/UnitTests.csproj", "UnitTests/"]
 COPY ["BLL/BLL.csproj", "BLL/"]
 COPY ["DAL/DAL.csproj", "DAL/"]
 RUN dotnet restore "LibraryWebApp_v2/LibraryWebApp_v2.csproj"

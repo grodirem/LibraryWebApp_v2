@@ -35,10 +35,12 @@ public class ImageService : IImageService
         if (string.IsNullOrEmpty(imagePath))
             return;
 
-        var oldFilePath = Path.Combine(_imageDirectory, imagePath.TrimStart('/'));
-        if (File.Exists(oldFilePath))
+        var fileName = imagePath.Split('/').Last();
+        var fullPath = Path.Combine(_imageDirectory, fileName);
+
+        if (File.Exists(fullPath))
         {
-            File.Delete(oldFilePath);
+            File.Delete(fullPath);
         }
     }
 }
